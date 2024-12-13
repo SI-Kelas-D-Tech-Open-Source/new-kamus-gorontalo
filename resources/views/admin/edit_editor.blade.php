@@ -12,7 +12,8 @@
         <div class="flex flex-col md:flex-row gap-6">
             <!-- Foto Profil -->
             <div class="flex-shrink-0">
-                <img src="https://flowbite.com/docs/images/people/profile-picture-5.jpg" alt="Foto Profil" class="w-32 h-32 object-cover rounded-full mx-auto md:mx-0">
+                <img src="https://flowbite.com/docs/images/people/profile-picture-5.jpg" alt="Foto Profil"
+                    class="w-32 h-32 object-cover rounded-full mx-auto md:mx-0">
             </div>
 
             <!-- Informasi Detail -->
@@ -51,16 +52,17 @@
         <!-- Tombol Aksi -->
         <div class="mt-6 flex flex-col sm:flex-row justify-end gap-4">
             <form action="#" method="POST" class="inline-block w-full sm:w-auto">
-                @csrf
-                @method('PATCH')
-                <button type="submit" name="action" value="accept" class="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-800 w-full sm:w-auto mb-2 sm:mb-0">Terima</button>
-                <button type="submit" name="action" value="reject" class="bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-800 w-full sm:w-auto mb-2 sm:mb-0">Tolak</button>
-                
+            
+                <button type="submit" name="action" value="accept"
+                    class="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-800 w-full sm:w-auto mb-2 sm:mb-0">Terima</button>
+                <button type="submit" name="action" value="reject"
+                    class="bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-800 w-full sm:w-auto mb-2 sm:mb-0">Tolak</button>
+
             </form>
-            <a href="{{ route('aturEditor') }}" class="bg-gray-500 text-white text-center px-4 py-2 rounded-md hover:bg-gray-700 w-full sm:w-auto mb-2 sm:mb-0">Kembali</a>
+            <a href="{{ route('aturEditor') }}"
+                class="bg-gray-500 text-white text-center px-4 py-2 rounded-md hover:bg-gray-700 w-full sm:w-auto mb-2 sm:mb-0">Kembali</a>
         </div>
     </div>
 </div>
 
-@endsection
 @endsection
