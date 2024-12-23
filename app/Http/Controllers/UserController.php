@@ -67,8 +67,10 @@ class UserController extends Controller
     }
 
     public function search(Request $request) {
-      $query = $request->input('q');
-      
+      $query = trim($request->input('q'));
+      if (empty($query)) {
+          return redirect()->back()->with('error', 'Masukkan kata kunci pencarian yang valid.');
+      }
       $results = Kata::where('gorontalo', 'LIKE', "%$query%")
                       ->orWhere('indonesia', 'LIKE', "%$query%")
                       ->get();
@@ -81,9 +83,10 @@ class UserController extends Controller
       
       $dataKata = Kata::where('gorontalo', 'LIKE', "%$query%")
                       ->orWhere('indonesia', 'LIKE', "%$query%")
-                      ->get();
-      
-      return view('admin.daftarKata', compact('dataKata'));
+                      ->paginate(10);
+      $user = Auth::user();
+  
+      return view('admin.daftarKata', compact('dataKata','user'));
     }
     
     public function getById($primaryKey) {
@@ -93,7 +96,7 @@ class UserController extends Controller
           return redirect()->back()->with('error', 'Kata tidak ditemukan.');
       }
   
-      return view('detail_kata', compact('kata'));
+      return view('detail_kata', compact('kata','user'));
     }
 
     //##########======== Admin View Routing =========############
@@ -103,10 +106,61 @@ class UserController extends Controller
     }
 
     public function viewProfile(){
-
+      $user = Auth::user();
+      // dd($user->profile_photo_path);
       return view('admin.detailProfil')->with(['user' => Auth::user()]);
     }
+   
+    public function viewEditProfile(){
+      
+      // $datauser = User::where('id', $id)->get();
 
+      return view('admin.EditProfil')->with([ 'user' => Auth::user()]);
+    }
+
+    public function updateProfile(Request $request)
+{
+    // Validasi inputan
+    $request->validate([
+        'name' => 'required|string|max:255',
+        'fullname' => 'nullable|string|max:255',
+        'email' => 'required|email|unique:users,email,' . auth()->id(),
+        'phone_number' => 'nullable|string|min:6|max:15',
+        'bio' => 'nullable|string',
+        'profile_photo' => 'nullable|image|mimes:jpg,jpeg,png,gif|max:2048',
+    ]);
+
+    $user = auth()->user(); // Ambil user yang sedang login
+
+    // Update atribut model User secara manual
+    $user->name = $request->name;
+    $user->fullname = $request->fullname;
+    $user->email = $request->email;
+    $user->phone_number = $request->phone_number;
+    $user->bio = $request->bio;
+
+    // Simpan perubahan tanpa foto
+    $user->save();
+    
+    // Jika ada foto profil, proses upload
+    if ($request->hasFile('profile_photo')) {
+        // Hapus foto lama jika ada
+        if ($user->profile_photo_path && file_exists(public_path('storage/' . $user->profile_photo_path))) {
+            unlink(public_path('storage/' . $user->profile_photo_path));
+        }
+
+        // Simpan foto baru
+        $profilePicturePath = $request->file('profile_photo')->store('profile-pictures', 'public');
+        $user->profile_photo_path = $profilePicturePath; // Update path gambar baru
+
+        // Simpan perubahan gambar
+        $user->save(); // Simpan perubahan gambar ke dalam database
+    }
+
+    return redirect()->route('viewProfile')->with('success', 'Profil berhasil diperbarui.');
+}
+
+    
     public function viewAturEditor(){
       $dataEditor = User::whereIn('role', ['editor', 'pending'])->get();
 
@@ -114,6 +168,7 @@ class UserController extends Controller
     }
 
     public function viewDaftarKata(){
+      // $dataKata = Kata::paginate(500);
       $dataKata = Kata::all();
       return view('admin.daftarKata')->with(['dataKata' => $dataKata, 'user' => Auth::user()]);
     }
@@ -130,67 +185,68 @@ class UserController extends Controller
 
     public function updateKata(Request $request)
 {
-    // Validate the incoming request
-    $request->validate([
-        'id_kata' => 'required|exists:katas,id_kata', // Ensure the kata ID exists in the database
-        'gorontalo' => 'required|string|max:255',
-        'indonesia' => 'required|string|max:255',
-        'kategori' => 'required|string|max:255',
-        'kalimat' => 'required|string|max:255',
-        'pengucapan' => 'required|string|max:255',
-        'suara' => 'nullable|file|mimes:mp3,wav|max:10240', // Max size 10MB for audio
-        'gambar' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048', // Max size 2MB for image
-    ]);
+    try {
+        // Validasi request
+        $request->validate([
+            'id_kata' => 'required|exists:katas,id_kata',
+            'gorontalo' => 'required|string|max:255',
+            'indonesia' => 'required|string',
+            'kategori' => 'required|string|max:255',
+            'kalimat' => 'required|string|max:255',
+            'pengucapan' => 'required|string|max:255',
+            'suara' => 'nullable|file|max:10240',
+            'gambar' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
+        ]);
 
-    // Retrieve the kata record using the id from the request
-    $kata = Kata::find($request->input('id_kata'));
+        // Ambil data kata berdasarkan ID
+        $kata = Kata::find($request->input('id_kata'));
 
-    // Update the kata fields
-    $kata->gorontalo = $request->input('gorontalo');
-    $kata->indonesia = $request->input('indonesia');
-    $kata->kategori = $request->input('kategori');
-    $kata->kalimat = $request->input('kalimat');
-    $kata->pengucapan = $request->input('pengucapan');
+        // Update field kata
+        $kata->gorontalo = $request->input('gorontalo');
+        $kata->indonesia = $request->input('indonesia');
+        $kata->kategori = $request->input('kategori');
+        $kata->kalimat = $request->input('kalimat');
+        $kata->pengucapan = $request->input('pengucapan');
 
-    // Handle the image upload if a new image is provided
-    if ($request->hasFile('gambar')) {
-        // Store the image in 'images' directory within the 'public' disk
-        $gambarPath = $request->file('gambar')->store('images', 'public');
+        // Proses upload gambar
+        if ($request->hasFile('gambar')) {
+            $gambarPath = $request->file('gambar')->store('images', 'public');
 
-        // If there's an existing image, delete it
-        if ($kata->gambar && file_exists(public_path('storage/' . $kata->gambar))) {
-            unlink(public_path('storage/' . $kata->gambar));  // Remove old image
+            // Hapus gambar lama jika ada
+            if ($kata->gambar && file_exists(public_path('storage/' . $kata->gambar))) {
+                unlink(public_path('storage/' . $kata->gambar));
+            }
+
+            $kata->gambar = $gambarPath;
         }
 
-        // Update the image path in the database
-        $kata->gambar = $gambarPath;
+        // Proses upload suara
+        if ($request->hasFile('suara')) {
+            $suaraPath = $request->file('suara')->store('suara', 'public');
+            $kata->suara = $suaraPath;
+        }
+
+        // Simpan data kata yang telah diupdate
+        $kata->save();
+
+        // Log history edit
+        EditHistory::create([
+            'id_kata' => $kata->id_kata,
+            'id_editor' => auth()->user()->id,
+            'action' => 'edit',
+            'activity' => $request->input('activity'),
+        ]);
+
+        // Redirect dengan pesan sukses
+        return redirect()->route('daftarKata')
+            ->with('success', 'Data berhasil diubah.');
+
+    } catch (\Exception $e) {
+        // Log error jika terjadi pengecualian
+        Log::error('Error saat menyimpan kata: ' . $e->getMessage());
+
+        return redirect()->back()->with('error', 'Terjadi kesalahan saat menyimpan data.');
     }
-
-    // Handle the audio file upload if a new audio file is provided
-    if ($request->hasFile('suara')) {
-        // Store the audio file in 'suara' directory within the 'public' disk
-        $suaraPath = $request->file('suara')->store('suara', 'public');
-        $kata->suara = $suaraPath;
-    }
-
-    // Save the updated kata record
-    $kata->save();
-
-    // Log the edit history
-    EditHistory::create([
-        'id_kata' => $kata->id_kata,
-        'id_editor' => auth()->user()->id, // ID pengguna yang mengedit kata
-        'action' => 'edit',
-        'activity' => $request->input('activity'),
-    ]);
-
-    // Retrieve all kata records
-    $dataKata = Kata::all();
-
-    // Return to the listing page with success message
-    return redirect()->route('daftarKata')
-        ->with('success', 'Data berhasil diubah.')
-        ->with(['dataKata' => $dataKata, 'user' => Auth::user()]);
 }
 
 
@@ -214,9 +270,6 @@ class UserController extends Controller
         // Simpan perubahan
         $editor->save();
       }
-      // $dataEditor->role = $request->role;
-      // $dataEditor->save();
-      // dd($dataEditor); 
 
       return view('admin.edit_editor')->with(['dataEditor' => $dataEditor, 'user' => Auth::user()]);
     }
@@ -239,54 +292,45 @@ class UserController extends Controller
     }
     
     public function viewDashboard(){
+      $user = Auth::user();
+      $userId = $user->id;
       $totalKata = Kata::count();
       $editor = User::where('role', 'editor')->count();
       $pending = User::where('role', 'pending')->count();
+      $kontribusi = EditHistory::where('id_editor', $userId)->count();
 
       return view('admin.dashboard')->with([
         'user' => Auth::user(),
         'editor' => $editor,
         'pending' => $pending,
         'totalKata' => $totalKata,
+        'kontribusi' => $kontribusi,
       ]);
     }
 
     public function simpanKata(Request $request)
     {
-
-        // Validasi input
+      try {
         $request->validate([
             'gorontalo' => 'required|string|max:255',
-            'indonesia' => 'required|string|max:255',
+            'indonesia' => 'required|string',
             'kategori' => 'required|string|max:255',
             'kalimat' => 'nullable|string',
             'pengucapan' => 'nullable|string|max:255',
-            'gambar' => 'nullable|image|mimes:jpg,jpeg,png,gif|max:2048', // Validasi gambar
-            'audio' => 'nullable|file|mimes:mp3,wav|max:10240', // Validasi audio
+            'gambar' => 'nullable|image|mimes:jpg,jpeg,png,gif|max:2048',
+            'audio' => 'nullable|file|max:2048',
         ]);
-        // dd($request->all());
-        // Menyimpan gambar (jika ada)
+
         $gambarPath = null;
         if ($request->hasFile('gambar')) {
             $gambarPath = $request->file('gambar')->store('images', 'public');
         }
 
-        // Menyimpan file audio (jika ada)
-      //   $audioPath = null;
+        $audioPath = null;
+        if ($request->hasFile('audio')) {
+            $audioPath = $request->file('audio')->store('audio-files', 'public');
+        }
 
-        
-      // if ($request->hasFile('audio')) {
-      //   // Tentukan folder tempat penyimpanan file audio
-      //   $audioFolder = 'audio-files/subfolder_name'; // Ubah 'subfolder_name' dengan nama folder yang Anda inginkan
-        
-      //   // Membuat folder jika belum ada
-      //   Storage::makeDirectory('public/' . $audioFolder);
-
-      //   // Menyimpan file audio
-      //   $audioPath = $request->file('audio')->store($audioFolder, 'public');
-      // }
-
-        // Menyimpan data kata ke dalam database
         $kata = Kata::create([
             'gorontalo' => $request->gorontalo,
             'indonesia' => $request->indonesia,
@@ -294,21 +338,22 @@ class UserController extends Controller
             'kalimat' => $request->kalimat,
             'pengucapan' => $request->pengucapan,
             'gambar' => $gambarPath,
-            // 'suara' => $audioPath,  // Menyimpan path audio yang disimpan di server
+            'suara' => $audioPath,
         ]);
 
-        // dd($kata);
-
         EditHistory::create([
-          'id_kata' => $kata->id_kata,
-          'id_editor' => auth()->user()->id, // ID pengguna yang mengedit kata
-          'action' => 'create',
-          'activity' => 'Menambahkan kata ' . $kata->gorontalo,
+            'id_kata' => $kata->id_kata,
+            'id_editor' => auth()->user()->id,
+            'action' => 'create',
+            'activity' => 'Menambahkan kata ' . $kata->gorontalo,
         ]);
 
         return redirect()->route('daftarKata')->with('success', 'Data berhasil ditambahkan.');
-        // Redirect atau return response
-        // return response()->json(['success' => true, 'message' => 'Data berhasil disimpan.']);
+    } catch (\Exception $e) {
+
+        Log::error('Error saat menyimpan kata: ' . $e->getMessage());
+        return redirect()->back()->with('error', 'Terjadi kesalahan saat menyimpan data. Silakan coba lagi.');
+    }
     }
 
     public function deleteKata($id)
@@ -317,22 +362,25 @@ class UserController extends Controller
         Kata::where('id_kata', $id)->delete();
         
         return redirect()->route('daftarKata')->with('success', 'Data berhasil dihapus.');
-        
-        // Ref. Delete File
-        $dataDetail = Share::where('idFilePenelitian', $id)->get();
-        if ($data) {
-            $pathFile = $data->file;
-            // dd($pathFile);
-            if ($pathFile != null || $pathFile != '') {
-                Storage::delete($pathFile);
-            }
-
-            foreach ($dataDetail as $share) {
-                $share->delete();
-            }
-
-        }
     }
+
+    public function userHistory(Request $request, $user_id = null)
+{
+    // Jika $user_id null, gunakan ID pengguna yang sedang login
+    $user_id = $user_id ?? Auth::user()->id;
+
+    // Ambil riwayat kontribusi berdasarkan user_id
+    $editHistories = EditHistory::where('id_editor', $user_id)->get();
+
+    // Mengambil data user untuk ditampilkan di halaman
+    $user = Auth::user();
+
+    // Mengirim data ke view
+    return view('admin.detailHistory', [
+        'editHistories' => $editHistories,
+        'user' => $user
+    ]);
+}
 
     public function daftarHistory()
     {
@@ -342,7 +390,7 @@ class UserController extends Controller
                                     ->paginate(20);
 
         // Mengirim data ke view
-        return view('admin.detailHistory', compact('editHistories'));
+        return view('admin.detailHistory')->with(['editHistories' => $editHistories, 'user' => Auth::user()]);
     }
 
     public function searchHistory(Request $request)
@@ -365,33 +413,8 @@ class UserController extends Controller
         ->get();
 
     // Return the filtered results as JSON
-        return view('admin.detailHistory', compact('editHistories'));
+    return view('admin.detailHistory')->with(['editHistories' => $editHistories, 'user' => Auth::user()]);
     }
 
-        public function filterEditor(Request $request)
-    {
-        // Mengambil nilai 'role' yang dikirim dari form filter
-        $role = $request->input('role');
-
-        // Jika role 'editor' dipilih
-        if ($role == 'editor') {
-            // Menampilkan data pengguna dengan role 'editor'
-            $dataEditor = User::where('role', 'editor')->get();
-            dd('anjay');
-        }
-        // Jika role 'pending' dipilih
-        else if ($role == 'pending') {
-          dd('yasalh');
-            // Menampilkan data pengguna dengan role 'pending'
-            $dataEditor = User::where('role', 'pending')->get();
-        }
-        // Jika tidak ada filter (default) maka tampilkan semua pengguna
-        else {
-            $dataEditor = User::whereIn('role', ['editor', 'pending'])->get();
-        }
-
-        // Mengirim data editor ke view
-        return view('admin.aturEditor', compact('dataEditor'));
-    }
     
 }
