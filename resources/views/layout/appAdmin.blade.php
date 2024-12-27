@@ -9,8 +9,9 @@
     <link href="https://fonts.bunny.net/css?family=figtree:400,600&display=swap" rel="stylesheet" />
     <script src="https://cdn.jsdelivr.net/npm/flowbite@2.5.2/dist/flowbite.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/simple-datatables@9.0.3"></script>
-
-    @vite('resources/css/app.css')
+    {{-- <script src="https://cdn.tailwindcss.com"></script> --}}
+    <link rel="stylesheet" href="{{ asset('build/assets/app-dclBg7_d.css') }}">
+    {{-- @vite('resources/css/app.css') --}}
 </head>
 
 <body>
@@ -187,7 +188,8 @@
     
     </script>
     {{-- <script src="../../../node_modules/flowbite/dist/flowbite.min.js"></script> --}}
-    @vite(['resources/js/app.js'])
+    {{-- @vite(['resources/js/app.js']) --}}
+    <script src="{{ asset('build/assets/app-BWs0uY9J.js') }}"></script>
 
 </body>
 

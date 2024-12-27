@@ -1,7 +1,7 @@
 @section('title', 'Profil')
 @extends('layout.appAdmin')
 @section('konten_admin')
-    @vite('resources/css/app.css')
+    {{-- @vite('resources/css/app.css') --}}
 
 
     <h1 class="text-2xl font-bold text-gray-800 mb-4">Profil</h1>
