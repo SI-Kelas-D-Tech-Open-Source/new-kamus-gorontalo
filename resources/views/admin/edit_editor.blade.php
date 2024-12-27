@@ -4,7 +4,7 @@
 
     @extends('layout.appAdmin')
 @section('konten_admin')
-    @vite('resources/css/app.css')
+    {{-- @vite('resources/css/app.css') --}}
 
     <div class="container mx-auto p-4">
         <div class="bg-white shadow-md rounded-lg p-6">
@@ -86,7 +86,6 @@
                 </button>
             </form>
 
-            <form action="{{ route('accEditor') }}" method="POST">
                 @csrf
                 <input type="hidden" name="id" value="{{ $editor->id }}">
                 <button type="submit" name="action"
@@ -97,10 +96,3 @@
             </form>
 
             <a href="{{ route('aturEditor') }}"
-                class="bg-gray-500 text-white text-center px-4 py-2 rounded-md hover:bg-gray-700 w-full sm:w-auto mb-2 sm:mb-0">Kembali</a>
-        </div>
-    </div>
-    </div>
-
-@endsection
-@endsection

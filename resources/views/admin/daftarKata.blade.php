@@ -2,7 +2,7 @@
 
 @extends('layout.appAdmin')
 @section('konten_admin')
-@vite('resources/css/app.css')
+{{-- @vite('resources/css/app.css') --}}
 <h1 class="text-3xl font-extrabold text-black text-center">Daftar Kata</h1>
 <div class="m-4 p rounded-lg">
     <div class="relative overflow-x-auto shadow-md sm:rounded-lg p-5">

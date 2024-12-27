@@ -7,18 +7,28 @@
     <title>@yield('title')</title>
     <link rel="preconnect" href="https://fonts.bunny.net">
     <link href="https://fonts.bunny.net/css?family=figtree:400,600&display=swap" rel="stylesheet" />
-    {{-- <link rel="stylesheet" href="{{ asset('css/app.css') }}"> --}}
-    <link rel="stylesheet" href=“https://kamus-gorontalo.vercel.app/build/assets/app-BjRauw1h.css”>
-
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="{{ asset('build/assets/app-dclBg7_d.css') }}">
     {{-- @vite('resources/css/app.css') --}}
 </head>
 <body>
     <!-- Navbar -->
     <div class="bg-gray-100 p-6 shadow-md fixed top-0 left-0 w-full z-50">
         <div class="mx-auto flex justify-between items-center max-w-4xl">
+            <!-- Tombol Kembali -->
+            <a href="javascript:history.go(-1)" 
+               class="flex items-center text-md md:text-lg font-bold hover:text-zinc-400 space-x-2">
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+                </svg>
+            </a>
+
+            <!-- Logo -->
             <a href="{{ route('login') }}" class="text-md md:text-lg font-bold hover:text-zinc-400">
                 Tumuwoto Log
             </a>
+
+            <!-- Search Form -->
             <form class="relative md:w-2/3 w-1/2" action="{{ route('search') }}" method="GET">
                 <input 
                     type="search" 
@@ -55,4 +65,5 @@
         @yield('content')
     </div>
 </body>
+
 </html>
