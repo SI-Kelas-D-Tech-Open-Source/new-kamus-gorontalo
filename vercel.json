@@ -34,9 +34,9 @@
     },
     "build": {
       "env": {
-        "LD_LIBRARY_PATH": "/usr/lib:/usr/local/lib",
-        "NODE_ENV": "production"
+        "LD_LIBRARY_PATH": "/usr/lib"
       }
     }
+    
 }
   
