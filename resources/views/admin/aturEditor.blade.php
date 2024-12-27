@@ -54,24 +54,24 @@
     <!-- Tampilan Stacked untuk Mobile -->
     <div class="sm:hidden grid grid-cols-1 gap-4">
         @foreach($dataEditor as $editor)
-        <div class="bg-white border border-gray-200 p-4 rounded-lg shadow-sm hover:shadow-md transition-shadow">
-            <div class="flex justify-between items-center mb-3">
-                <h2 class="font-semibold text-lg text-gray-800">{{ $editor->name }}</h2>
-                <span class="text-sm text-gray-500">{{ $editor->role }}</span>
+            <div class="bg-white border border-gray-200 p-4 rounded-lg shadow-sm hover:shadow-md transition-shadow">
+                <div class="flex justify-between items-center mb-3">
+                    <h2 class="font-semibold text-lg text-gray-800">{{ $editor->name }}</h2>
+                    <span class="text-sm text-gray-500">{{ $editor->role }}</span>
+                </div>
+                <div class="text-sm text-gray-700 mb-2">
+                    <strong>Email:</strong> {{ $editor->email }}
+                </div>
+                <div class="text-sm text-gray-700 mb-2">
+                    <strong>Nomor HP:</strong> {{ $editor->no_hp }}
+                </div>
+                <div class="mt-2">
+                    <a href="{{ route('editAccEditor', $editor->id) }}"
+                        class="inline-block bg-blue-600 text-white text-sm font-medium px-3 py-2 rounded-lg hover:bg-blue-800">
+                        Detail
+                    </a>
+                </div>
             </div>
-            <div class="text-sm text-gray-700 mb-2">
-                <strong>Email:</strong> {{ $editor->email }}
-            </div>
-            <div class="text-sm text-gray-700 mb-2">
-                <strong>Nomor HP:</strong> {{ $editor->no_hp }}
-            </div>
-            <div class="mt-2">
-                <a href="{{ route('editAccEditor', $editor->id) }}"
-                    class="inline-block bg-blue-600 text-white text-sm font-medium px-3 py-2 rounded-lg hover:bg-blue-800">
-                    Detail
-                </a>
-            </div>
-        </div>
         @endforeach
     </div>
 </div>
